@@ -1,0 +1,47 @@
+Создаем таблицы для проверки кода
+
+CREATE TABLE setup (
+	setup_id integer NOT NULL, 
+    name character varying(80) NOT NULL,
+    caption character varying(80) NOT NULL, 
+	CONSTRAINT setup_id_pkey PRIMARY KEY (setup_id)
+);
+
+
+CREATE TABLE setup_val (
+	setup_val_id integer NOT NULL, 
+	setup_id integer NOT NULL,
+	crit_vals character varying(100) NOT NULL,
+	value character varying(100),
+	CONSTRAINT setup_val_id_pkey PRIMARY KEY (setup_val_id),
+	CONSTRAINT setup_val_setup_id_fkey FOREIGN KEY (setup_id)
+	REFERENCES public.country (country_id) MATCH SIMPLE
+);
+
+
+CREATE TABLE offices (
+     offise_id integer NOT NULL, 
+	 ncode character varying(6) NOT NULL,
+	 name character varying(80) NOT NULL
+);
+
+/* Этот запрос объединяет таблицы SETUP и SETUP_VAL на основе столбца ID. 
+Он фильтрует строки, в которых столбец CRIT_VALS содержит «107» (офис в Медногорске),
+используя оператор LIKE. Он также проверяет отсутствие строк в SETUP_VAL, которые имеют тот же SETUP_ID и содержат «105» (офис в Бузулуке)
+в столбце CRIT_VALS, используя предложение NOT EXISTS */
+
+SELECT s.NAME AS setting_name, sv.CRIT_VALS
+FROM SETUP s
+INNER JOIN SETUP_VAL sv ON s.SETUP_ID = sv.SETUP_ID
+WHERE sv.CRIT_VALS ~'%107%' 
+  -- Офис в Медногорске
+  AND NOT  EXISTS (
+    SELECT 1
+    FROM SETUP_VAL sv2
+    WHERE sv2.SETUP_ID = sv.SETUP_ID
+      AND sv2.CRIT_VALS ~'%105%' 
+  -- Офис в Бузулуке
+  );
+
+
+
